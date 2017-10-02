@@ -1,0 +1,195 @@
+____________________________________________
+interest - Noun
+Top 4 Senses (~500 each)
+____________________________________________
+    1)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 20
+        hiddensize = 50, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 82.5 (83-87, 104 - 120)
+                   82.0 (local maxima at 11 epochs)
+
+    2)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 82.5 (9-17, 24-26, ~95-175 )
+        (Better than (1))
+
+    3)  90% Training set = 1845, 10% Test Set = 205
+        #checked for 99 epochs 
+        batchSize = 100
+        hiddensize = 300, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 80.5 (epoch 99, most probably many times after 99)
+                   80.0(local 5-9, 89-98)
+
+    4)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 20
+        hiddensize = 300, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 81.0( 71-79, 85 - 200)
+                   80.5( 32-70 )
+
+    5)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 100, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 82.5 (16-20, 25-35)
+                   82.0 (local 5)
+
+    6)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 5
+        punctuation REMOVED
+        ACCURACY = 77.5 (38-53, 95-130)
+
+    7)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 4
+        punctuation REMOVED
+        ACCURACY = 79.5 (26)
+                   79.0 (14-32)
+
+    8)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 300, Bidirectional
+        window size = 4
+        punctuation removed
+        ACCURACY = 78 (7, 8, 9, 11, 12, 13)
+
+    9)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 3
+        punctuation REMOVED
+        ACCURACY = 78.0 (11)
+
+    10)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 4
+        punctuations not removed
+        ACCURACY = 79.5 (68-103)  
+                   78.5 (13 - 16, 20)
+
+    11)  90% Training set = 1845, 10% Test Set = 205
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 4
+        punctuations not removed
+        ACCURACY = 76.0 (108 - 129) 
+                   74.5 (local 11)
+____________________________________________
+serve - Verb
+Top 8 Senses (6 senses ~500 each, 7th sense ~ 250, 8th sense ~ 150 )
+____________________________________________
+    1)  90% Training set = 3042, 10% Test Set = 338
+        batchSize = 100
+        hiddensize = 50, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 56.5 (12, 13)
+
+    2)  90% Training set = 3042, 10% Test Set = 338
+        #for 28 epochs
+        batchSize = 100
+        hiddensize = 700, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 59.76 (10, 22, 23)
+
+    3)  90% Training set = 3042, 10% Test Set = 338
+        #for 28 epochs
+        batchSize = 20
+        hiddensize = 700, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 61.54 (17, 18)
+
+    4)  90% Training set = 3042, 10% Test Set = 338
+        batchSize = 50
+        hiddensize = 700, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 62.13 (84-93)
+                 = 61.53 (18-21)                    
+
+    5)  90% Training set = 3042, 10% Test Set = 338
+        #for 40 epochs
+        batchSize = 10
+        hiddensize = 700, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 62.47 (3) ... Fast ACCURACY
+
+    7)  90% Training set = 3042, 10% Test Set = 338
+        #_________________________________________
+        #for 11 epochs
+        batchSize = 10
+        hiddensize = 300, Bidirectional
+        window size = 5
+        punctuations not removed
+        ACCURACY = 62.43 (4) ... fast ACCURACY
+
+    8)  90% Training set = 3042, 10% Test Set = 338
+        batchSize = 100
+        hiddensize = 300, Bidirectional_LSTM + LSTM in series
+        window size = 5
+        punctuations not removed
+        ACCURACY = 61-62 Not better thatn single LSTM 
+
+
+____________________________________________
+position - Noun
+Top 4 Senses (~500 each)
+____________________________________________
+
+    1)  90% Training Set = 2250, 10% Test Set = 250
+        #done for 65 epochs
+        batchSize = 100
+        hiddensize = 50 
+        window size = 5
+        punctuations not removed
+        ACCURACY =  56.0 (64, 65, ... maybe higher later on)
+                    55.2 (local 9)
+
+    2)  90% Training Set = 2250, 10% Test Set = 250
+        #done for 78 epochs
+        batchSize = 20
+        hiddensize = 50 
+        window size = 5
+        punctuations not removed
+        ACCURACY =  62.4 (14)
+
+    3)  90% Training Set = 2250, 10% Test Set = 250
+        #done for 78 epochs
+        batchSize = 7
+        hiddensize = 50 
+        window size = 5
+        punctuations not removed
+        ACCURACY =  64 (70 onwards)
+                    62.4 (local 13)
+
+    4)  90% Training Set = 2250, 10% Test Set = 250
+        #done for 7 epochs
+        batchSize = 1
+        hiddensize = 300 
+        window size = 5
+        punctuations not removed
+        ACCURACY =  62.4 (6)
+
+    5)  90% Training Set = 2250, 10% Test Set = 250
+        #done for 38 epochs
+        batchSize = 7
+        hiddensize = 300 
+        window size = 5
+        punctuations not removed
+        ACCURACY = 62.0 (33-38)

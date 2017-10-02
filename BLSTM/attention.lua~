@@ -1,0 +1,118 @@
+class = require 'class'
+argcheck = require 'argcheck'
+
+learning_rate = 0.005
+learning_rate_decay = 0.00005
+
+cnt = 0
+
+if Attention == nil then
+    Attention = class('Attention')
+end
+
+check_attn = argcheck{
+    {name = "update_attention",type="number", default = 0}
+}
+    
+
+function Attention:__init_weights__(n )
+    self.attention_weights = torch.ones(1, n):cuda()
+    global_attention_weights = self.attention_weights
+end
+
+
+function Attention:__init__(input, ... )
+    local update_attention = check_attn(...)
+    --Input function in the form input_sentence_size * batchSize * hiddenSize (n*b*h)
+    self.n = (#input)[1]
+    self.b = (#input)[2]
+    self.h = (#input)[3]
+
+    self.input = input
+    self.attention_weights = global_attention_weights
+--    self.attention_weights[{{},{self.n}}] = 0.8
+--    self.attention_weights[{{},{5}}] = 0
+--    self.attention_weights[{{},{7}}] = 0.2
+    tmp = nn.Sequential()
+    tmp:add(nn.SoftMax())
+    self.nn = tmp:cuda()
+
+    self.output = torch.zeros(1, self.b, self.h):cuda()
+    self.grad_input = torch.zeros(self.n, self.b, self.h):cuda()
+end
+
+flag =0 
+function Attention:forward()
+    if flag ==0 then 
+        --print("____________________")
+        --print(self.attention_weights)
+        --print(self.nn:forward(self.attention_weights))
+        --print("____________________")
+        flag = 1
+    end
+    if self.n ~= 11 then
+        print("HELL")
+        self.attention_weights = torch.ones(1, self.n):cuda()
+        for i = 1, self.b do
+            t = self.nn:forward(self.attention_weights) * self.input:select(2, i)
+            self.output[{{}, {i}, {}}][1] = t
+        end
+    end
+
+    for i = 1, self.b do
+        t = self.nn:forward(self.attention_weights) * self.input:select(2, i)
+        self.output[{{}, {i}, {}}][1] = t
+    end
+    return self.output
+end
+
+function Attention:update_attention_weights(input, output_grad, softmax_output)
+    dsoftmax_dattn = torch.diag(softmax_output:select(2,1)):cuda() - softmax_output * softmax_output:transpose(1,2)
+        
+    dloss_da = output_grad * input:transpose(1,2) * dsoftmax_dattn
+
+    self.attention_weights = self.attention_weights - learning_rate * dloss_da
+end
+
+function Attention:backward(output_grad)
+    output_grad:resize(1, self.b, self.h)
+    for i = 1, self.b  do
+        attn_softmax_weights =  self.nn:forward(self.attention_weights):transpose(1,2)
+
+        self.grad_input[{{}, {i}, {}}] = attn_softmax_weights * output_grad:select(2,i)
+
+        
+        if self.n == 11 then
+            self:update_attention_weights(self.input:select(2,i), output_grad:select(2,i), attn_softmax_weights)
+        end
+    
+        --dloss_dattention = output_grad:select(2,i) * self.input:select(2,i):transpose(1,2)
+        
+        
+        --dloss_softmax = self.nn:backward(self.attention_weights, dloss_dattention)
+        
+        --dloss_dattention = output_grad:select(2,i) * self.input:select(2,i):transpose(1,2)
+
+        --self.attention_weights = self.attention_weights - learning_rate * dloss_dattention
+
+        cnt = cnt + 1
+        if cnt %1000 == 0 then
+            --print(self.nn:forward(self.attention_weights))
+            --print(learning_rate)
+        end
+    end
+
+    
+    if self.n == 11 then
+        global_attention_weights = self.attention_weights
+    end
+    return self.grad_input
+end
+
+function Attention:decay_learning_rate()
+    if(learning_rate > 0) then 
+        learning_rate = learning_rate/( 1 + 0.01*learning_rate_decay/learning_rate)
+        print("\n\nLEARNING RATE = "..learning_rate.."\n\n")
+    end
+end
+

@@ -1,0 +1,271 @@
+import os
+import sys 
+import re
+import string
+import argparse
+from numpy import random
+from nltk.corpus import stopwords
+from nltk import word_tokenize
+from nltk import pos_tag
+
+def preprocess(checkword, pos = "noun", per_split = 0.2, uniformly_random = 1, sliceSize = 5 , dominant_only = 1, dominant_per = 0.2, remove_punctuation = 0, remove_stopwords = 0, POS_tags = 0, POS_RED = 0, senseval = False):
+    if not senseval:
+        cmd = "./Preprocess_Files/view.sh " + pos + " " + checkword 
+        os.system(cmd)
+    else:
+        cmd = "python senseval_preprocess.py " + checkword
+        os.system(cmd)
+        
+    Sent = open("./Preprocess_Files/Temp/tmp", "r").read().split('\n')
+    del Sent[len(Sent) - 1] # last string is empty
+    Sens = open("./Preprocess_Files/Temp/tmpkey", "r").read().split()
+
+    assert(len(Sent) == len(Sens))
+    print("Total number of examples: " + str(len(Sent)))
+   
+    # Delete minor senses if flag positive
+    if dominant_only == 1:
+        SenSet = list(set(Sens))
+        SenCnt = []
+        for i in SenSet:
+            SenCnt.append(Sens.count(i))
+        
+        maxCnt = max(SenCnt)
+        SenRemove = []
+        for i in range(0, len(SenSet)):
+            if SenCnt[i] < dominant_per * maxCnt:
+                print("IGNORING", SenSet[i], SenCnt[i])
+                SenRemove.append(SenSet[i])
+
+        tmpSt = []
+        tmpSe = []
+        for i in range(0, len(Sent)):
+            if Sens[i] not in SenRemove:
+                tmpSt.append(Sent[i])
+                tmpSe.append(Sens[i])
+        Sent = tmpSt
+        Sens = tmpSe
+                
+   
+    if POS_tags == 1:
+        for i in range(0, len(Sent)):
+            try:
+                tmp = word_tokenize(Sent[i])
+                tmp_tagged = pos_tag(tmp)
+            except UnicodeDecodeError as u:
+                Sent[i] = re.sub(r'[^\x00-\x7F]+',' ', Sent[i])
+                tmp = word_tokenize(Sent[i])
+                tmp_tagged = pos_tag(tmp)
+            tmp = ""
+            for j in range(0, len(tmp_tagged)):
+                tmptag = tmp_tagged[j][1].lower()
+
+                if POS_RED == 1:
+                    if tmptag in ['$', '\'', '(', ')', ',', '.', '--', ':', ';']:
+                        tmptag = 'PUNCTUATION'
+                    elif tmptag in ['DT', 'EX']:
+                        tmptag = 'DETERMINER'
+                    elif tmptag in ['jj', 'jjr', 'jjs']:
+                        tmptag = 'ADJ'
+                    elif tmptag in ['nn', 'nnp', 'nnps', 'nns']:
+                        tmptag = 'NOUN'
+                    elif tmptag in ['prp', 'prp$']:
+                        tmptag = 'PRONOUN'
+                    elif tmptag in ['rb', 'rbr','rbs']:
+                        tmptag = 'ADVERB'
+                    elif tmptag in ['vb', 'vbd', 'vbg','vbn','vbp','vbz']:
+                        tmptag = 'VERB'
+                    elif tmptag in ['wdt', 'wp', 'wp$', 'wrb']:
+                        tmptag = 'WH_WORD'
+
+                tmp += " " + tmp_tagged[j][0] + "_" + tmptag
+            Sent[i] = tmp
+
+    #randomly shuffle
+    tmp = list(zip(Sent, Sens))
+    random.shuffle(tmp)
+    Sent[:], Sens[:] = zip(*tmp)
+
+    lenst = len(Sent)
+    SenSet = list(set(Sens))
+    SenSet.sort()
+    SenCnt = []
+
+    for i in SenSet:
+        SenCnt.append(Sens.count(i))
+
+    maxCnt = max(SenCnt)
+
+    Sent_div = []
+    for i in range(0,len(SenSet)):
+        Sent_div.append([])
+        
+    newline_regex = re.compile(r"\n[\n]*")
+    exclude = set(string.punctuation)
+    for i in range(0, lenst):
+        Sent[i] = Sent[i].strip()
+        if remove_stopwords == 1:
+            tmp = Sent[i].split()
+            filtered_words = [word for word in tmp if word not in stopwords.words('english')]
+            Sent[i] = ' '.join(filtered_words)
+
+        if remove_punctuation == 1:
+            Sent[i] = ''.join(ch for ch in Sent[i] if ch not in exclude)
+        if uniformly_random == 1:
+            left, _ ,right = Sent[i].lower().partition(checkword)
+            n = sliceSize
+            left = left.split()[-n:]
+            right = right.split()[:n]
+            try:
+                del right[0]
+            except:
+                pass
+           
+            tmp = []
+            if len(left) < sliceSize:
+                for j in range(0,sliceSize-len(left)):
+                    tmp.append('START')
+            tmp.extend(left)
+            left = tmp 
+
+            for j in range(len(right), sliceSize):
+                right.append('END') 
+
+            Sent[i] = ' '.join(left + [checkword] + right)
+
+        Sent[i] = Sent[i].strip()
+        Sent[i] = Sent[i].replace(" ", "\n")
+        Sent[i] = newline_regex.sub("\n", Sent[i])
+        if "\n\n" in Sent[i]:
+            print(Sent[i])
+        ind = SenSet.index(Sens[i])
+        Sent_div[ind].append(Sent[i])
+
+
+    
+    SentTest = []
+    SensTest = []
+    Sent = []
+    Sens = []
+    for i in range(0, len(SenSet)):
+        numTotal = len(Sent_div[i])
+        numTest = int( per_split * numTotal)
+        numTrain = numTotal - numTest
+
+        SentTest.extend(Sent_div[i][ 0: numTest - 1 ])
+        for j in range(0, numTest - 1):
+            SensTest.append(SenSet[i])
+
+        Sent.extend(Sent_div[i][ numTest: numTotal ])
+        for j in range(0, numTrain ):
+            Sens.append(SenSet[i])
+    
+    lenst = len(Sent)
+    for i in range(0, lenst):
+        ind = SenSet.index(Sens[i])
+        num = int(1.0*maxCnt/SenCnt[ind])
+        for j in range(0, num):
+            Sent.append(Sent[i])
+            Sens.append(Sens[i])
+
+    # for i in set(Sens):
+        # print(i, Sens.count(i))
+    #Write training set sentences
+    tmp = list(zip(Sent, Sens))
+    random.shuffle(tmp)
+    Sent[:], Sens[:] = zip(*tmp)
+
+    print("Number of training examples: " + str(len(Sent)))
+    fileSent = open("BLSTM/text_words.csv", "w")
+    fileSens = open("BLSTM/summary_words.csv", "w")
+    tmp = '\n\n'.join(Sent)
+    fileSent.write(tmp)
+    tmp = '\n\n'.join(Sens)
+    fileSens.write(tmp)
+
+    try: 
+        #Write test set sentences
+        tmp = list(zip(SentTest, SensTest))
+        random.shuffle(tmp)
+        SentTest[:], SensTest[:] = zip(*tmp)
+        print("Number of testing examples: " + str(len(SentTest)))
+
+        fileSentTest = open("BLSTM/test_text_words.csv", "w")
+        fileSensTest = open("BLSTM/test_summary_words.csv", "w")
+        tmp = '\n\n'.join(SentTest)
+        fileSentTest.write(tmp)
+        tmp = '\n\n'.join(SensTest)
+        fileSensTest.write(tmp)
+    except:
+        print("Number of testing examples: 0")
+
+    # os.system("cp BLSTM/summary_words.csv BLSTM/summary_words_train.csv")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = "Preprocess data")
+    parser.add_argument('word', type = str)
+    parser.add_argument('type', type = str)
+    parser.add_argument('-split', type = float)
+    parser.add_argument('-uniform', type = int)
+    parser.add_argument('-dominant', type = float)
+    parser.add_argument('-remove_punctuation', type = int)
+    parser.add_argument('-remove_stopwords', type = int)
+    parser.add_argument('-POS', type = int)
+    parser.add_argument('-POSRED', type = int)
+    parser.add_argument('-senseval', type = int)
+    args = parser.parse_args()
+    
+    if args.word == None or args.type == None:
+        print(args.help)
+
+    elif args.split == None and args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS == None:
+        preprocess(args.word, args.type)
+
+    elif args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS == None:
+        preprocess(args.word, args.type, args.split)
+
+    elif args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS == None:
+        preprocess(args.word, args.type, args.split)
+
+
+
+    #currently in use__0
+    elif args.split == None and args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS != None and args.POSRED == None:
+        preprocess(args.word, args.type, POS_tags = args.POS)
+
+
+    #currently in use__0
+    elif args.split == None and args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS != None and args.POSRED != None and args.senseval != None:
+        preprocess(args.word, args.type, POS_tags = args.POS, POS_RED = args.POSRED, senseval = args.senseval)
+
+
+    #currently in use__2
+    elif args.split != None and args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS != None and args.POSRED == None and args.senseval != None:
+        preprocess(args.word, args.type, per_split = args.split,  POS_tags = args.POS, senseval = args.senseval)
+
+    #currently in use__3
+    elif args.split != None and args.uniform == None and args.dominant == None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS != None and args.POSRED != None and args.senseval != None:
+        preprocess(args.word, args.type, per_split = args.split,  POS_tags = args.POS, POS_RED = args.POSRED, senseval = args.senseval)
+
+    elif args.split != None and args.uniform == None and args.dominant != None and args.remove_punctuation == None and args.remove_stopwords == None and args.POS != None and args.POSRED != None and args.senseval != None:
+        print("HELLO")
+        preprocess(args.word, args.type, per_split = args.split,  POS_tags = args.POS, POS_RED = args.POSRED, senseval = args.senseval, dominant_only = 1, dominant_per = args.dominant)
+
+    elif args.split != None  and args.dominant != None  and args.POS != None and args.POSRED != None and args.senseval != None:
+        preprocess(args.word, args.type, args.split, 1, dominant_only =1 , dominant_per = args.dominant, POS_tags = args.POS, POS_RED = args.POSRED, senseval = args.senseval)
+    
+    else:
+        print("NONE ACCEPTED")
+    # arg = sys.argv
+    # if len(arg) == 2:
+        # preprocess(sys.argv[1])
+    # elif len(arg) == 6:
+        # preprocess(arg[1], arg[2], float(arg[3]), int(arg [4]), int(arg[5]))
+    # elif len(arg) == 8:
+        # preprocess(arg[1], arg[2], float(arg[3]), int(arg [4]), int(arg[5]), int(arg[6]), float(arg[7]))
+    # elif len(arg) == 9:
+        # preprocess(arg[1], arg[2], float(arg[3]), int(arg [4]), int(arg[5]), int(arg[6]), float(arg[7]), int(arg[8]))
+    # elif len(arg) == 10:
+        # preprocess(arg[1], arg[2], float(arg[3]), int(arg [4]), int(arg[5]), int(arg[6]), float(arg[7]), int(arg[8]), int(arg[9]))
+    # elif len(arg) == 11:
+        # preprocess(arg[1], arg[2], float(arg[3]), int(arg [4]), int(arg[5]), int(arg[6]), float(arg[7]), int(arg[8]), int(arg[9]), int(arg[10]))

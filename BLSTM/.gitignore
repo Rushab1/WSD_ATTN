@@ -1,0 +1,15 @@
+database.sqlite 
+model_tmp
+data/
+Word2Vec/ 
+word2vec.t7
+Models/
+Models*/
+text_words.csv
+summary_words.csv
+test_text_words.csv 
+test_summary_words.csv
+models/
+Evaluations/
+lowermodel_tmp
+Temp/ 

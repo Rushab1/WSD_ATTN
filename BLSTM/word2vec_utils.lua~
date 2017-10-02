@@ -1,0 +1,15 @@
+    
+most_similar = function(word, lookup, Index2Vocab, vocablen)
+    similarity = {}
+    t = torch.Tensor(1,1)
+    t[1][1] = Vocab[word]
+    v_word = lookup:forward({t})[1][1]:clone()
+
+    for i,j in pairs(Index2Vocab) do
+        t = torch.Tensor(1,1)
+        t[1][1] = i
+        v = lookup:forward({t})[1][1]:clone()
+        similarity[i] = torch.dot(v, v_word)/(torch.norm(v)*torch.norm(v_word))
+    end
+        print(i,v-v_word) 
+end
