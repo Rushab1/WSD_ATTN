@@ -7,7 +7,7 @@ require 'attention'
 
 ---------------------------------
 cmd = torch.CmdLine()
-cmd:option('-model', 'Models/15')
+cmd:option('-model', 'Models/10')
 cmd:option('-testfile', 'test' )
 cmd:option('-task', 'eval')
 cmd:option('-confusionMatrix', 'False')
@@ -70,7 +70,7 @@ model = loaded_model.model
 attn = Attention.new()
 
 attn:__init__(model.attention.n, batchSize, model.attention.h)
---attn.w = model.attention.w:clone()
+attn.newm = model.attention.newm:clone()
 attn.learning = false
 
 Vocab = loaded_model.Vocab

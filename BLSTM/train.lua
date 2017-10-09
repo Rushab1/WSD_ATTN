@@ -30,12 +30,13 @@ file_txti = io.open('cv_text_words.csv','r')
 file_smy = io.open('cv_summary_words.csv','r')
 
 windowSize = 11
-numEpochs = 500
+numEpochs = 80
 batchSize = 32
 hiddenSize = 300
 minVocabCount = 0
 attn_learning = false
-attn_learning_rate = 1 
+attn_learningRate = 0.001
+attn_learningRateDecay = 0.0001
 dropout = 0.3
 print('Begin')
 
@@ -130,7 +131,7 @@ function nextBatch()
             if Secab[sentBatch_smy[j][j2]] ~= nil then 
                 decoderInputs[j2][j] = Secab[sentBatch_smy[j][j2]]
             else
-                decoderInputs[j2][j] = Secab['<unknown>']
+                decoderInputs[j2][j] = 0
             end
         end
 
@@ -381,7 +382,7 @@ encoder:cuda()
 decoder:cuda()
 
 attn = Attention.new()
-attn:__init__(windowSize, batchSize, hiddenSize, attn_learning, attn_learning_rate)
+attn:__init__(windowSize, batchSize, hiddenSize, attn_learning, attn_learningRate, attn_learningRateDecay)
 
 
 model = {}
@@ -395,8 +396,8 @@ print('Done')
 
 print('Getting sgd_params')
 sgd_params = {
-    learningRate = 0.005, --changed from 1e-2
-    learningRateDecay = 5e-5, --changed from 1e-4
+    learningRate = 0.001, --changed from 1e-2
+    learningRateDecay = 1e-4, --changed from 1e-4
     weightDecay = 0,
     momentum = 0.2    -- changed from 0.2
 }
@@ -438,16 +439,8 @@ end
 
 for j = 1, numEpochs do
     print("------------EPOCH: "..j.."---------------")
-
-
-    -----------------------------------------------
-    if attn.learning == true then 
-        attn.learning_rate = 5 * torch.exp( -0.005 * j)
-    end
-    if attn.w ~= nil then 
-       print(attn.w)
-    end
-    -----------------------------------------------
+    print(attn.learningRate)
+    print(attn.w)
 
 
     tmp1, tmp2 = combinedRandomShuffle(reviews, summaries)
@@ -465,6 +458,16 @@ for j = 1, numEpochs do
 
     for i = 1, numDocuments/batchSize do	
         _, fs = optim.sgd(feval,x, sgd_params)
+
+
+        -----------------------------------------------
+        if attn.learning == true then 
+            --print(attn.learningRate, sgd_params.learningRate, sgd_params.evalCounter, attn.learningRateDecay)
+            attn.learningRate = attn_learningRate/(1 + sgd_params.evalCounter * attn.learningRateDecay)
+        end
+        -----------------------------------------------
+
+
         encoder:forget()
         decoder:forget()
 

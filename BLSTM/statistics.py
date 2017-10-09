@@ -11,7 +11,7 @@ wrong_sentences = pickle.load(open("wrong_sentences.pkl", "rb"))
 def statistics(sent_file = "text_words.csv", sense_file = "summary_words.csv", file_flag = 1):
     if file_flag == 1:
         f = open(sent_file).read().split("\n\n")
-        g = open(sense_file).read().split("\n\n")
+        g = open(sense_file).read().strip().split("\n\n")
     else:
         f = sent_file
         g = sense_file
@@ -64,10 +64,16 @@ def statistics(sent_file = "text_words.csv", sense_file = "summary_words.csv", f
         tmp = {}
         for j in range(0, windowSize):
 
-            #words_to_count = (word for word in np.transpose(fdiv[i][:,j]).tolist()[0][0])
-            words_to_count = (word for word in np.transpose(fdiv[i][:,j]).tolist()[0])
-            c = Counter(words_to_count)
-            tmp[j- (windowSize - 1) / 2 ] = c
+            try:
+                words_to_count = (word for word in np.transpose(fdiv[i][:,j]).tolist()[0])
+                c = Counter(words_to_count)
+                tmp[j- (windowSize - 1) / 2 ] = c
+            except: #Just for some words with some silly error somewhere
+                print("EXCEPTION CODE")
+                words_to_count = (word for word in np.transpose(fdiv[i][:,j]).tolist()[0][0])
+                c = Counter(words_to_count)
+                tmp[j- (windowSize - 1) / 2 ] = c
+
 
         fdiv_by_position[i] = deepcopy(tmp)
     return fcount, fcount_dist, fdiv_by_position
@@ -87,7 +93,7 @@ def save_statistics(save_file_name = "cooccurrence.csv", sent_file = "text_words
     for sense in s:
         for position in s[sense].keys():
             for word in s[sense][position]:
-                save_file.write(sense + " " + str(position) + " " + word + " " + str(s[sense][position][word]) + "\n")
+                save_file.write(" " + sense + " " + str(position) + " " + word + " " + str(s[sense][position][word]) + "\n")
 
     save_file.close()
 

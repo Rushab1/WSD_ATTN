@@ -1,5 +1,5 @@
 import os
-import sys 
+import sys
 import re
 import string
 import argparse
@@ -15,15 +15,15 @@ except:
 	print("NLTK NOT FOUND")
 
 
-def preprocess(checkword, 
-               pos = "noun", 
-               datafile = "~/Data/one-million-sense-tagged-instances-wn30", 
-               per_split = 0.2, 
-               window = 1, 
+def preprocess(checkword,
+               pos = "noun",
+               datafile = "~/Data/one-million-sense-tagged-instances-wn30",
+               per_split = 0.2,
+               window = 1,
                windowSize = 5,
                add_start_end = 1,
                dominant_only = 1,
-               dominant_per = 0.2, 
+               dominant_per = 0.2,
                remove_punctuation = 0,
                remove_stopwords = 0,
                POS_tags = 0,
@@ -34,27 +34,27 @@ def preprocess(checkword,
 
     if not senseval:
         print("Using million-word-dataset")
-        cmd = "./Preprocess_Files/view.sh " + datafile + " " + pos + " " + checkword 
+        cmd = "./Preprocess_Files/view.sh " + datafile + " " + pos + " " + checkword
         os.system(cmd)
     else:
         print("Using Senseval Dataset")
         cmd = "python senseval_preprocess.py " + checkword
         os.system(cmd)
-        
+
     Sent = open("./Preprocess_Files/Temp/tmp", "r").read().split('\n')
     del Sent[len(Sent) - 1] # last string is empty
     Sens = open("./Preprocess_Files/Temp/tmpkey", "r").read().split()
 
     assert(len(Sent) == len(Sens))
     print("Total number of examples: " + str(len(Sent)))
-   
+
     # Delete minor senses if flag positive
     if dominant_only == 1:
         SenSet = list(set(Sens))
         SenCnt = []
         for i in SenSet:
             SenCnt.append(Sens.count(i))
-        
+
         maxCnt = max(SenCnt)
         SenRemove = []
         for i in range(0, len(SenSet)):
@@ -70,7 +70,7 @@ def preprocess(checkword,
                 tmpSe.append(Sens[i])
         Sent = tmpSt
         Sens = tmpSe
-                
+
     ##Use POS Tags if flag positive
     if POS_tags == 1:
         for i in range(0, len(Sent)):
@@ -127,7 +127,7 @@ def preprocess(checkword,
     Sent_div = []
     for i in range(0,len(SenSet)):
         Sent_div.append([])
-        
+
     newline_regex = re.compile(r"\n[\n]*")
     exclude = set(string.punctuation)
 
@@ -156,17 +156,17 @@ def preprocess(checkword,
             #    del right[0]
             #except:
             #    pass
-           
+
             tmp = []
             if len(left) < windowSize and add_start_end == 1:
                 for j in range(0,windowSize-len(left)):
                     tmp.append('START')
             tmp.extend(left)
-            left = tmp 
+            left = tmp
 
             if add_start_end == 1:
                 for j in range(len(right), windowSize):
-                    right.append('END') 
+                    right.append('END')
 
             Sent[i] = ' '.join(left + [checkword] + right)
 
@@ -178,7 +178,7 @@ def preprocess(checkword,
             print(Sent[i])
         ind = SenSet.index(Sens[i])
         Sent_div[ind].append(Sent[i])
-    
+
     ##Split Training and test sentences
     SentTest = []
     SensTest = []
@@ -196,7 +196,7 @@ def preprocess(checkword,
         Sent.extend(Sent_div[i][ numTest: numTotal ])
         for j in range(0, numTrain ):
             Sens.append(SenSet[i])
-    
+
     ##Equalize the number of Senses
     lenst = len(Sent)
     for i in range(0, lenst):
@@ -219,7 +219,7 @@ def preprocess(checkword,
     tmp = '\n\n'.join(Sens)
     fileSens.write(tmp)
 
-    try: 
+    try:
         ##Write test set sentences
         tmp = list(zip(SentTest, SensTest))
         random.shuffle(tmp)
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     parser.add_argument('-POSRED', type = int)
     parser.add_argument('-senseval', type = int)
     args = parser.parse_args()
-    
+
     tmp_dominant_only = 1
     if args.word == None or args.type == None:
         print(args.help)
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     if args.windowSize == None:
         args.windowSize = 5
     if args.add_start_end == None:
-        args.add_start_end = 1 
+        args.add_start_end = 1
     if args.dominant == None:
         tmp_dominant_only = 0
         args.dominant = 0.2
@@ -281,16 +281,16 @@ if __name__ == "__main__":
         args.senseval = False
 
     print(args.dominant, args.split)
-    
-    preprocess(args.word, args.type, 
-            per_split = args.split, 
-            window = args.window, 
+
+    preprocess(args.word, args.type,
+            per_split = args.split,
+            window = args.window,
             windowSize = args.windowSize,
             add_start_end = args.add_start_end,
-            dominant_only = tmp_dominant_only, 
-            dominant_per = args.dominant, 
-            remove_punctuation = args.remove_punctuation, 
-            remove_stopwords = args.remove_stopwords, 
-            POS_tags = args.POS, 
-            POS_RED = args.POSRED, 
+            dominant_only = tmp_dominant_only,
+            dominant_per = args.dominant,
+            remove_punctuation = args.remove_punctuation,
+            remove_stopwords = args.remove_stopwords,
+            POS_tags = args.POS,
+            POS_RED = args.POSRED,
             senseval = args.senseval )
